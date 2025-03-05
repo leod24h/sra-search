@@ -16,9 +16,11 @@ def get_connection():
 
 def format_query(query):
     url = "https://openrouter.ai/api/v1/chat/completions"
+    with open("../api_key.txt", "r") as file:
+        api_key = file.read().strip()  # Remove any whitespace or newline
 
     headers = {
-        "Authorization": "Bearer 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",  # Replace with your real API key
+        "Authorization": f"Bearer {api_key}",  # Replace with your real API key
         "Content-Type": "application/json"
     }
 
@@ -108,7 +110,6 @@ from collections import defaultdict
 
 def create_filter_dict(text):
     text = text.split("|")
-    print(text, len(text))
 
     def safe_split(index):
         try:

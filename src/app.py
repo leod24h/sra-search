@@ -39,7 +39,6 @@ def vector_query(text):
 
     # Query Vectors
     sql_query = create_SQL_query(text)
-    # sql_query = "SELECT id FROM metadata_all ORDER BY vector <=> %s::vector LIMIT 500;"
     cursor_emb.execute(sql_query, (q_emb,))
 
     # Fetch ids
@@ -231,6 +230,7 @@ def query_filter():
         # Format Query
         text = format_query(text)
         q_emb = embedding_model.encode([truncate_query(text)]).tolist()[0]
+        print("Query:", text)
         conn = get_connection()
         cursor_emb = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
         if filters:
@@ -239,7 +239,6 @@ def query_filter():
         else:
             # Query Vectors
             filter_dict = create_filter_dict(text)
-            # sql_query = "SELECT id FROM metadata_all ORDER BY vector <=> %s::vector LIMIT 50;"
 
             where_conditions = []
             for key, value in filter_dict.items():
@@ -253,13 +252,16 @@ def query_filter():
                 # elif key == "location":
                 #     where_conditions.append(f"latitude >= {value[0]} AND latitude <= {value[1]}")
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
-            where_clause = "1=1"
             params = (q_emb,)
-        where_clause = "1=1"
         cols = ", ".join(get_colnames())
 
+        ## SET NPROBES
+        cursor_set = conn.cursor()
+        cursor_set.execute("SET ivfflat.probes = 200;")
+        cursor_set.close
+
         # Output SQL query
-        sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::vector LIMIT 500;"
+        sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::halfvec LIMIT 100;"
         print(sql_query)
 
         cursor_emb.execute(sql_query, params)

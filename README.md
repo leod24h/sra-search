@@ -35,7 +35,7 @@ Our system processes the query and:
 
 ```
 
-### 🎛️ Advanced Search
+### Advanced Search
 For more **specific** searches, users can apply structured **filters**. These can be used **alone or in combination** with semantic queries.
 
 #### Available Filters:
