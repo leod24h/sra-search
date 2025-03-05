@@ -84,8 +84,10 @@ The system employs a multi-stage process for **query interpretation, embedding-b
 ## Authors
 Tracy Wong
 - Data curation, Front end & UI Development, PostgreSQL database, flask development
+
 Leo Mok
 - Backend & LLM integration, PostgreSQL and pgvector setup, algorithm development
+
 {Carlos}
 
 ## Development 
