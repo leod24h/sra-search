@@ -1,0 +1,8 @@
+meta_study_set.xml.gz
+
+src copy/
+sra-metagenome-frontend-backend/
+SRA-Curated/
+embeddings/
+all-MiniLM-L6-v2/
+jina-reranker-v1-turbo-en/
