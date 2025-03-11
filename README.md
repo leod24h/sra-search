@@ -15,6 +15,9 @@ A powerful and efficient tool for **natural language** searching and filtering *
 
 ---
 
+## Cost
+Cost per query 0.000243 USD. ~ 500 queries = 1 HKD
+
 ## How It Works
 
 ### Semantic Search
@@ -32,7 +35,7 @@ Our system processes the query and:
 
 **Example Output:**
 ```
-
+![Example Output](../imgs/example.png)
 ```
 
 ### Advanced Search
@@ -82,10 +85,10 @@ The system employs a multi-stage process for **query interpretation, embedding-b
 ---
 
 ## Authors
-Tracy Wong
+Tracy Wong @ tracywong@d24h.hk
 - Data curation, Front end & UI Development, PostgreSQL database, flask development
 
-Leo Mok
+Leo Mok @ leom@d24h.hk
 - Backend & LLM integration, PostgreSQL and pgvector setup, algorithm development
 
 {Carlos}

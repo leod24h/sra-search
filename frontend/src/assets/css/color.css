@@ -1,0 +1,17 @@
+:root {
+  /* table header cell background color */
+  --very-light-1: rgb(249, 249, 251); 
+  
+  /* a href hover text color */
+  --purple-light-2: #b3acd4;
+  /* a href text color, (study title, study abstrct) title color */
+  --purple-1: #5559a6;
+  
+  --dark-purple-1: rgb(70, 68, 81);
+
+  --pink-light-1: rgb(250, 240, 250);
+  --pink-1: rgb(141, 26, 179);
+  
+  --green-1: rgb(170, 207, 201);
+  --green-2: rgb(0, 98, 83);
+}

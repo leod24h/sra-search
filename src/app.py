@@ -8,55 +8,19 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 from psycopg2.extras import DictCursor
 from query import *
+from helper import *
 from sentence_transformers import CrossEncoder
 from datetime import datetime
 import json
- 
+from pgvector.psycopg2 import HalfVector, register_vector
+import os
+
+
+
 embedding_model = SentenceTransformer("../all-MiniLM-L6-v2", device='cuda')
 rerank_model = CrossEncoder("../jina-reranker-v1-turbo-en", trust_remote_code=True, device='cuda')
 
 app = Flask(__name__)
-
-
-
-@app.route('/query/<string:text>', methods=['GET'])
-@cross_origin()
-def vector_query(text):
-
-    import time
-    t1 = time.time()
-    text = format_query(text)
-    t2 = time.time() 
-    print("Time taken to format query:", t2 - t1)
-    q_emb = embedding_model.encode([truncate_query(text)]).tolist()[0]
-
-    t1 = time.time()
-    print("Time taken to encode query:", t1 - t2)
-
-
-    conn = get_connection()
-    cursor_emb = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
-
-    # Query Vectors
-    sql_query = create_SQL_query(text)
-    cursor_emb.execute(sql_query, (q_emb,))
-
-    # Fetch ids
-    results = cursor_emb.fetchall()
-    t2 = time.time()
-    print("Time taken to process SQL queries (x2) ids:", t2 - t1)    
-    # Rerank the first 100 to get ids
-    reranked_ids = rerank(text, results, rerank_model, limit= 100)
-    t1 = time.time()
-    print("Time taken to rerank:", t1 - t2)
-
-
-    output = [results[i] for i in reranked_ids] +results[100:]
-    t2 = time.time()
-    print("Time taken to concatenate reranked results:", t2 - t1)
-    cursor_emb.close()
-    conn.close()
-    return jsonify(output)
 
     
 
@@ -227,19 +191,32 @@ def query_filter():
         return jsonify({"error": str(e)}), 500
     
     if len(text) > 1:
+
         # Format Query
-        text = format_query(text)
+        t1 = time.time()
+        text = format_query_gpt(text)
+        t2 = time.time()
+        print("Time taken to format query:", t2 - t1)
+
+        # Encode Query
         q_emb = embedding_model.encode([truncate_query(text)]).tolist()[0]
+        t3 = time.time()
+        print("Time taken to encode query:", t3 - t2)
         print("Query:", text)
         conn = get_connection()
         cursor_emb = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
+
+
+        # Load pgvector
+        register_vector(conn)
+
         if filters:
             where_clause, params = advance_filter_where(filters)
-            params.append(q_emb)
+            params.append(HalfVector(q_emb))
         else:
             # Query Vectors
             filter_dict = create_filter_dict(text)
-
+            params = []
             where_conditions = []
             for key, value in filter_dict.items():
                 if key == "time": 
@@ -249,36 +226,50 @@ def query_filter():
                         where_conditions.append(f"releasedate >= {value[0]}")
                     elif len(value[1]) > 3:
                         where_conditions.append(f"releasedate <= {value[1]}") 
-                # elif key == "location":
-                #     where_conditions.append(f"latitude >= {value[0]} AND latitude <= {value[1]}")
+                elif key == "country":
+                    if len(value)>2:
+                        where_conditions.append(f"LOWER(country) LIKE %s")
+                        params.append(f"%{value}%")
+
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
-            params = (q_emb,)
+            params.append(HalfVector(q_emb))
         cols = ", ".join(get_colnames())
+
 
         ## SET NPROBES
         cursor_set = conn.cursor()
         cursor_set.execute("SET ivfflat.probes = 200;")
-        cursor_set.close
+        cursor_set.close()
 
-        # Output SQL query
-        sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::halfvec LIMIT 100;"
+
+        # Count
+        count = get_count(where_clause, params[:-1])
+        print("Count:", count) 
+        t35 = time.time()
+        print("Time taken to count:", t35 - t3)
+        
+        if count > 10:
+            sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::halfvec LIMIT 200;"
+        else:
+            sql_query =f"SELECT {cols} FROM metadata ORDER BY vec <=> %s::halfvec LIMIT 200;"
         print(sql_query)
 
         cursor_emb.execute(sql_query, params)
         results = cursor_emb.fetchall()
-
+        t4 = time.time()
+        print("Time taken to query:", t4 - t35)
         # Count number of matches
-        count = get_count(where_clause, params)
-        print("Count:", count)
+
         # Fetch ids
         if len(results)>1:
             # Rerank the first 100 to get ids
-            reranked_ids = rerank(text, results, rerank_model, limit= 100)
+            reranked_ids = rerank(text, results, rerank_model, limit= 200)
 
-            output = [results[i] for i in reranked_ids] #+results[100:]
+            output = [results[i] for i in reranked_ids][:100] #+results[100:]
             cursor_emb.close()
             conn.close()
             
+            print("Time taken to rerank:", time.time() - t4)
             output.append(count)
             
             return jsonify(output)
@@ -308,74 +299,65 @@ def query_filter():
     else:
         return jsonify({}), 200
 
-def advance_filter_where(filters):
+
+@app.route('/fetch_study', methods=['GET'])
+@cross_origin()
+def fetch_study():
     try:
-        if not filters:
-            return jsonify({"error": "No valid filters provided"}), 400
+        study_acc = request.args.get('query', '').strip()
         
-        accession_related = [
-            "acc",
-            "experiment",
-            "biosample",
-            "bioproject",
-        ]
-
-        # Build SQL query with dynamic filtering
-        conditions = "1=1"
-        total_filters = len(filters)
-        params = []
-        for idx, filter in enumerate(filters):
-            field = filter.get('field')
-            operator = filter.get('operator')
-            value = filter.get('value')
-            addition = filter.get('addition')
-            print(idx, field, operator, value)
-            
-            if idx == 0:
-                conditions += " AND "
-                conditions += "(" * (total_filters - 1)
-            else:
-                conditions += f" {operator} "
-            if field == 'acc':
-                conditions_temp = ""
-                for col_name in accession_related:
-                    conditions_temp = construct_condition(conditions_temp, "OR")
-                    conditions_temp += f"{col_name} = %s"
-                    params.append(value)
-                conditions += f"({conditions_temp})"
-            if field == 'organism':
-                if addition:
-                    print("Include all its children")
-                    conditions += f"organism_id = %s or organism_id LIKE %s"
-                    params.append(f"%.{value[0]}")
-                    params.append(f"%.{value[0]}.%")
-                else:
-                    conditions += f"organism_id LIKE %s"
-                    params.append(f"%.{value[0]}")
-            if field == 'geo':
-                conditions += f"country LIKE %s"
-                params.append(f"%{value}%")
-            if field == 'date':
-                after_timestamp = convert_date_to_timestamp(value[0])
-                before_timestamp = convert_date_to_timestamp(value[1])
-                conditions += f"(collectiondate >= %s AND collectiondate <= %s OR releasedate >= %s AND releasedate <= %s)"
-                params.append(after_timestamp)
-                params.append(before_timestamp)
-                params.append(after_timestamp)
-                params.append(before_timestamp)
-            if field == 'attribute':
-                conditions += f"attribute LIKE %s"
-                params.append(f"%{value}%")
-            if idx != total_filters - 1:
-                conditions += ")"
+        # Connect to database
+        conn = get_connection()
+        cur = conn.cursor()
         
-        print(conditions)
+        query = """
+            SELECT study_title, study_abstract
+            FROM study
+            WHERE sra_study = %s;
+        """
         
-        return conditions, params
+        cur.execute(query, (study_acc,))
+        
+        results = cur.fetchall()
+        cur.close()
+        
+        return jsonify(results)
+        
+    except:
+        return jsonify({}), 200
+    
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@app.route('/query_abstract/<string:text>', methods=['GET'])
+def query_abstract(text, ft = False):
+    
+    text = format_query_abstract(text)
+    conn = get_connection()
 
+    cursor = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
+    if ft:
+        sql_query = """
+            SELECT sra_study, study_title, study_abstract, center_project_name, study_type
+            FROM study_abstract WHERE to_tsvector('english', study_title) @@ plainto_tsquery(%s) 
+            LIMIT 20;
+        """    
+
+        cursor.execute(sql_query, (text,))
+    else:
+        query_vector = embedding_model.encode([text]).tolist()[0]
+        sql_query = """
+            SELECT sra_study, study_title, study_abstract, center_project_name, study_type
+            FROM study_abstract
+            ORDER BY vec <=> %s::halfvec
+            LIMIT 20;
+        """
+        cursor.execute(sql_query, (query_vector,))
+
+    
+
+    results = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(results)
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host="0.0.0.0")
             # ssl_context=("fullchain.pem", "privkey.pem"))

@@ -2,16 +2,113 @@ import requests
 import pandas as pd
 import psycopg2
 from datetime import datetime
+from helper import *
+import os
+import requests
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
+from abstract import *
 
-def get_connection():
-    conn = psycopg2.connect(
-        dbname="mgdb",
-        user="postgres",
-        password="1",
-        host="localhost",
-        port="5432"
+with open("../api_key.txt", "r") as f:
+    for line in f:
+        key, value = line.strip().split("=", 1)  
+        os.environ[key] = value  
+
+# Set up Azure OpenAI credentials
+deployment = "gpt-4o-mini"  # Azure uses "deployment" instead of model name
+token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
+client = AzureOpenAI(
+    api_version="2024-10-21",
+    azure_endpoint="https://tracysra.openai.azure.com/",
+    azure_ad_token_provider=token_provider,
+)
+
+
+
+def get_prompt(query):
+    prompt = f"""
+    System:
+
+    You are a **Text Processing Assistant** specializing in **structured data extraction** from natural language queries. Your goal is to transform user queries into a predefined structured format.
+
+    **Objective:** Analyze natural language queries and extract key information to create a structured output according to the specifications below. You will identify organisms, associated genus names, countries, time ranges, and negative constraints.
+
+    **Output Format:**
+
+    Your output *must* adhere to this precise format:
+
+    `Organism: <organism_name> | Genus: <genus_names> | Attributes: <attribute> | Country: <country_name>  | Time: <unix_timestamp_range> | Location: <longitude, latitude> | Exclude: <negative_constraint>`
+
+    **Details for each field:**
+    * **Organism:** Extract the primary organism described in the query.
+    * **Genus:**
+        * **Specific Organisms:** If the query specifies a particular organism (e.g., "frogs"), provide *at least three* relevant genus names. 
+        * **Generic Organisms:** If the query uses a generic term (e.g., "animals", "tree animals"), provide *at least five* relevant genus names given the *context* (e.g. Forest, tree, ocean).
+    * **Country:** Extract the country mentioned in the query. Leave this field empty if no country mentioned.
+    * **Attributes:** Other relevant information that does not fit in the categories, such as color, size, blood, or any other. Also repeat the organism name here.
+    * **Time:** Represent the time range (if any) using two Unix timestamps formatted as `start_timestamp, end_timestamp`. Leave this field empty if no time is specified (Example Time Stamps - `1678886400, 1679059200`).
+    * **Location:** Transform the country into longitude and latitude. Separate the two values with a comma. Leave this field empty if no country mentioned.
+    * **Exclude:** Identify and extract negative statements. Words like "not", "but not", "without", and "except" indicate exclusions. Extract the subject of the negative constraint. Leave this field empty if no negative constraint exists.
+
+    **Rules to Follow:**
+    1. Always use `|` and `:` as delimiters.
+    2. No extra text, explanations, or formatting variations.
+    3. If the input is Chinese, first translate it to English, and then process the query. The output has to be in **English**.
+
+    
+    **Examples:**
+    * Query: "frogs not from France"
+      Output: "Organism: frogs | Genus: Lithobates, Phyllobates | Attributes: frog | Country: | Time: | Location: 46.2276, 2.2137 |  Exclude: France"
+    * Query: "australian sea animals"
+      Output: "Organism: animals | Genus: Carcharodon, Balaenopteridae, pinnipeds, Dugong, Megaptera | Attributes: | Country: Australia | Time: | Location: 25.2744, 133.7751 | Exclude: "
+    * Query: "Please find me American tree birds after 2017"
+      Output: "Organism: birds | Genus: Corvus, Passer, Parus, Turdus, Accipiter | Attributes: tree birds | Country: United States  | Time: 1456358935, 1551053335 | Location: 38.7946, 106.5348 | Exclude: "
+    * Query: "Hey, can you find me the blood of blue creatures?"
+      Output: "Organism: organism | Genus: Cyanocitta, Dendrobates, Glaucus, Paracanthurus, Passerina | Attributes: blood, blue | Country:  | Time: | Location: | Exclude: "
+
+
+
+    **Now Process This Query**:
+    Query: '{query}'
+    """
+    return prompt
+
+
+def format_query_gpt(query):
+    """
+    Formats the query and sends it to Azure OpenAI for structured data extraction.
+    """
+ 
+    prompt = get_prompt(query)
+    # Call Azure OpenAI API
+    response = client.chat.completions.create(
+        model=deployment,  # Uses deployment name instead of model
+        messages=[{"role": "user", "content": prompt.strip()}],
+        max_tokens=120,  # Reduced max_tokens to make the output shorter
+        temperature=0,
     )
-    return conn
+
+    # Extract the response text
+    output_text = response.choices[0].message.content.strip()
+    return output_text
+
+def format_query_abstract(query):
+    """
+    Formats the query and sends it to Azure OpenAI for structured data extraction.
+    """
+ 
+    prompt = get_prompt_abstract(query)
+    # Call Azure OpenAI API
+    response = client.chat.completions.create(
+        model=deployment,  # Uses deployment name instead of model
+        messages=[{"role": "user", "content": prompt.strip()}],
+        max_tokens=120,  # Reduced max_tokens to make the output shorter
+        temperature=0,
+    )
+
+    # Extract the response text
+    output_text = response.choices[0].message.content.strip()
+    return output_text
 
 
 def format_query(query):
@@ -24,49 +121,7 @@ def format_query(query):
         "Content-Type": "application/json"
     }
 
-    prompt = f"""
-    System:
-
-    You are a **Text Processing Assistant** specializing in **structured data extraction** from natural language queries. Your goal is to transform user queries into a predefined structured format.
-
-    **Objective:** Analyze natural language queries and extract key information to create a structured output according to the specifications below. You will identify organisms, associated genus names, countries, time ranges, and negative constraints.
-
-    **Output Format:**
-
-    Your output *must* adhere to this precise format:
-
-    `Organism: <organism_name> | Genus: <genus_names> | Country: <country_name> | Time: <unix_timestamp_range> | Exclude: <negative_constraint>`
-
-    **Details for each field:**
-
-    *   **Organism:** Extract the primary organism described in the query.
-    *   **Genus:**
-        *   **Specific Organisms:** If the query specifies a particular organism (e.g., "frogs"), provide *at least three* relevant genus names.
-        *   **Generic Organisms:** If the query uses a generic term (e.g., "animals", "birds"), provide *at least five* relevant genus names.
-    *   **Country:** Extract the country mentioned in the query. Leave this field empty if no country mentioned.
-    *   **Time:** Represent the time range (if any) using two Unix timestamps formatted as `start_timestamp, end_timestamp`.  Leave this field empty if no time is specified (Example Time Stamps - `1678886400, 1679059200`)
-    *   **Location:** Transform the country into longitude and latitude. Separate the two values with a comma. Leave this field empty if no country mentioned.
-    *   **Exclude:** Identify and extract negative statements. Words like "not", "but not", "without", and "except" indicate exclusions. Extract the subject of the negative constraint. Leave this field empty if no negative constraint exists.
-
-    **Rules to Follow:**
-    1. Always use `|` and `:` as delimiters.
-    2. No extra text, explanations, or formatting variations. 
-    3. If the input is Chinese, first translate it to English, and then process the query. The output has to be in **English**.
-
-    **Examples:**
-
-    *   Query: "frogs not from france"
-        Output: "Organism: frogs | Genus: Lithobates, Phyllobates | Country: | Time: | Location: 46.2276, 2.2137 | Exclude: France "
-
-    *   Query: "australian sea animals"
-        Output: "Organism: animals | Genus: Carcharodon, Balaenopteridae, pinnipeds, Dugong, Galeocerdo, Megaptera | Country: Australia | Time: | Location: 25.2744, 133.7751 | Exclude: "
-
-    *   Query: "American birds"
-        Output: "Organism: birds | Genus: Corvus, Passer, Parus, Turdus, Accipiter | Country: United States | Time: 1456358935, 1551053335 | Location: 38.7946, 106.5348 | Exclude: "
-
-    **Now Process This Query**:
-    Query: '{query}'
-    """
+    prompt = get_prompt(query)
 
     payload = {
         "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
@@ -85,7 +140,6 @@ def format_query(query):
         result = response.json()
         output_text = result.get("choices", [{}])[0].get("message", {}).get("content", "No response found")
 
-        print("Response:", output_text)
         return output_text
 
     except requests.exceptions.RequestException as e:
@@ -106,7 +160,6 @@ def rerank(query, results, rerank_model, limit=100):
     reranked_id = [entry['corpus_id'] for entry in response]
     
     return reranked_id
-from collections import defaultdict
 
 def create_filter_dict(text):
     text = text.split("|")
@@ -118,10 +171,10 @@ def create_filter_dict(text):
         except (IndexError, ValueError):
             return "", ""
 
-    t1, t2 = safe_split(3)
-    l1, l2 = safe_split(4)
+    t1, t2 = safe_split(4)
+    l1, l2 = safe_split(5)
     try:
-        country_str = text[2].split(":")[1].strip()
+        country_str = text[3].split(":")[1].strip()
     except (IndexError, ValueError):
         country_str = ""
     output_dict = {
@@ -152,53 +205,3 @@ def create_SQL_query(text):
     # Output SQL query
     output_str =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::vector LIMIT 500;"
     return output_str
-
-def get_colnames():
-    # conn = get_connection()
-    # cursor = conn.cursor()
-    # cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table}';")
-    # columns = [row[0] for row in cursor.fetchall() if row[0] != 'vector']
-    # cursor.close()
-    # conn.close()
-    columns =["acc", 
-                "experiment", 
-                "biosample", 
-                "organism", 
-                "bioproject", 
-                "releasedate", 
-                "collectiondate", 
-                "center_name", 
-                "country", 
-                "latitude", 
-                "longitude", 
-                "attribute", 
-                "instrument"]
-    return columns
-
-def construct_condition(condition, operator):
-    if condition != "":
-        condition += f" {operator} "
-    return condition
-
-def convert_date_to_timestamp(date_time_str):
-    # Convert date to timestamp
-    # 2025-02-28T16:00:00.000Z
-    return datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp()
-
-
-def get_count(filters, params):
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    if filters.strip() == "1=1" or len(filters) <= 3:
-        print("No filters applied")
-        return 35200294 # Total number of rows in the metadata table
-
-    sql_query = f"SELECT COUNT(*) FROM metadata WHERE {filters};"
-    cursor.execute(sql_query, params)
-    count = cursor.fetchall()[0][0]
-
-    cursor.close()
-    conn.close()
-
-    return count
