@@ -54,3 +54,6 @@ fullchain.pem
 graph.png
 
 *.xml
+*.dat.gz
+*.dat
+backup/

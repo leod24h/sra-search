@@ -16,17 +16,24 @@
             </a>
           </li>
           <li>
-            <a href="/advanced"
-              :class="{ 'text-white ': $route.path === '/advanced', 'text-gray-300': $route.path !== '/advanced' }"
+            <a href="/study"
+              :class="{ 'text-white ': $route.path === '/study', 'text-gray-300': $route.path !== '/study' }"
               class="hover:text-gray-200">
-              Advanced Search
+              Search by Study
+            </a>
+          </li>
+          <li>
+            <a href="/sample"
+              :class="{ 'text-white ': $route.path === '/sample', 'text-gray-300': $route.path !== '/sample' }"
+              class="hover:text-gray-200">
+              Search by Sample
             </a>
           </li>
           <li>
             <a href="/taxonomy"
               :class="{ 'text-white ': $route.path === '/taxonomy', 'text-gray-300': $route.path !== '/taxonomy' }"
               class="hover:text-gray-200">
-              Taxonomy Search
+              Taxonomy Browser
             </a>
           </li>
         </ul>
@@ -65,10 +72,13 @@
             <a href="/" class="block text-white hover:text-gray-200">Home</a>
           </li>
           <li>
-            <a href="/advanced" class="block text-white hover:text-gray-200">Advanced Search</a>
+            <a href="/study" class="block text-white hover:text-gray-200">Search by Study</a>
           </li>
           <li>
-            <a href="/taxonomy" class="block text-white hover:text-gray-200">Taxonomy Search</a>
+            <a href="/sample" class="block text-white hover:text-gray-200">Search by Sample</a>
+          </li>
+          <li>
+            <a href="/taxonomy" class="block text-white hover:text-gray-200">Taxonomy Browser</a>
           </li>
           <!-- Empty li to balance the grid if needed -->
           <li class="hidden sm:block"></li>

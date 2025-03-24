@@ -4,12 +4,13 @@ import { createApp } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import Home from './views/Home.vue'
-import Advanced from './views/Advanced.vue'
-import Taxonomy from './views/Taxonomy.vue'
-import View from './views/View.vue'
-import Metadata from './views/Metadata.vue'
-import Trial from './views/Trial.vue'
+import Home from '@/views/Home.vue'
+import BioStudy from '@/views/BioStudy.vue'
+import Sample from '@/views/Sample.vue'
+import Taxonomy from '@/views/Taxonomy.vue'
+import View from '@/views/View.vue'
+import Metadata from '@/views/Metadata.vue'
+import Trial from '@/views/Trial.vue'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -23,7 +24,7 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: Home,
   },
   {
     path: '/trial',
@@ -36,14 +37,19 @@ const routes = [
     component: Metadata,
   },
   {
-    path: '/advanced',
-    name: 'Advanced Search',
-    component: Advanced
+    path: '/study',
+    name: 'Study',
+    component: BioStudy,
+  },
+  {
+    path: '/sample',
+    name: 'Sample Search',
+    component: Sample,
   },
   {
     path: '/taxonomy',
     name: 'Taxonomy',
-    component: Taxonomy
+    component: Taxonomy,
   }
 ]
  

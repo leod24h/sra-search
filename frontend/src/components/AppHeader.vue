@@ -1,19 +1,20 @@
 <template>
-  <header class="relative bg-cover bg-center h-[500px] flex items-center justify-center" style="background-image: url(' science-background.jpeg');">
-  <!-- Gradient Overlay -->
-  <div class="absolute inset-0 bg-gradient-to-r from-blue-800 to-blue-800 opacity-70"></div>
-  
-  <!-- Content -->
-  <div class="relative z-10 text-center">
-    <h1 class="text-4xl font-extrabold text-white mb-4">
-      Unlock Insights with <span class="">SRA Metadata Search</span>
-    </h1>
-    <p class="text-lg text-gray-200 mb-6 max-w-xl mx-auto">
-      Search and filter millions of data through AI.
-    </p>
-    
-    <!-- Search Bar -->
-    <div class="mt-6">
+  <header class="relative bg-cover bg-center h-[500px] flex items-center justify-center"
+    style="background-image: url(' science-background.jpeg');">
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-800 to-blue-800 opacity-70"></div>
+
+    <!-- Content -->
+    <div class="relative z-10 text-center">
+      <h1 class="text-4xl font-extrabold text-white mb-4">
+        Unlock Insights with <span class="">SRA Metadata Search</span>
+      </h1>
+      <p class="text-lg text-gray-200 mb-6 max-w-xl mx-auto">
+        Search and filter millions of data through AI.
+      </p>
+
+      <!-- Search Bar -->
+      <!-- <div class="mt-6">
       <search-bar v-model="inputValue" @search="handleSearch"></search-bar>
       <div class="flex mt-4 mb-2 text-sm">
         <button
@@ -22,9 +23,23 @@
           Search
         </button>
       </div>
+    </div> -->
+      <!-- Buttons -->
+      <!-- Buttons -->
+      <div class="flex justify-center space-x-4">
+        <button
+          @click="$router.push('/study')"
+          class="flex items-center px-6 py-3 rounded bg-indigo-50 text-slate-600 font-semibold shadow-md hover:bg-indigo-200 transition-all">
+          Search by Study
+        </button>
+        <button
+          class="flex items-center px-6 py-3 rounded bg-indigo-50 text-slate-600 font-semibold shadow-md hover:bg-indigo-200 transition-all">
+          
+          Search by Sample
+        </button>
+      </div>
     </div>
-  </div>
-</header>
+  </header>
 </template>
 
 <script>
@@ -55,7 +70,7 @@ export default {
     };
   },
   methods: {
-    handleSearch(){
+    handleSearch() {
       if (this.inputValue.trim()) {
         this.$router.push({
           path: '/view',
@@ -64,7 +79,7 @@ export default {
         this.input_query = this.inputValue.trim();
       }
     },
-    
+
   },
 };
 </script>

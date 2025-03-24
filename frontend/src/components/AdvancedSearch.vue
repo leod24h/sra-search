@@ -1,6 +1,6 @@
 <template>
   <div class="w-full mx-auto py-12 mb-10 px-12">
-    <h2 class="text-2xl font-bold mb-4">Advanced Search</h2>
+    <h2 class="text-2xl font-bold mb-4">Search by sample</h2>
     <p class="text-gray-600 text-sm mb-1">
       Unlock powerful search capabilities to refine your results and find exactly what you need. Use keywords, filters,
       and advanced operators to narrow down your search efficiently.
