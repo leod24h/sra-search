@@ -62,6 +62,20 @@
     </div>
 
     <div class="px-10 py-5">
+      <div class="mb-2">
+        <el-popover placement="top" width="200" trigger="hover">
+          <template #reference>
+            <button
+              class="border py-1 px-2 gap-1 rounded flex items-center text-xs hover:border-blue-200 hover:text-blue-500"
+              @click="downloadSampleCSV">
+              <svg-icon type="mdi" :path="mdiDownlaodCSV_path"></svg-icon>
+              Download all samples
+            </button>
+          </template>
+          Download all samples of <b class="text-red-500">this page</b> as a CSV file for your further analysis.
+        </el-popover>
+      </div>
+
       <div class="flex items-center">
         <el-pagination :page-size="100" :total="searchResultsTotal" layout="total, prev, pager, next, jumper"
           @current-change="handlePagination" />
@@ -79,20 +93,18 @@
               <template #reference>
                 <el-button color="#5559a6" plain @click="toMetadatPage(row.acc)">{{ row.acc }}</el-button>
               </template>
-              <span style="color: var(--purple-1); font-size: 1rem;">Study title</span>
-              <p style="color: var(--dark-purple-1); font-size: 0.65rem; word-break: break-word;">{{ row.study_title
-                }}</p>
-              <span style="color: var(--purple-1); font-size: 1rem;">Study abstract</span>
-              <p style="color: var(--dark-purple-1); font-size: 0.65rem; word-break: break-word;">{{
-                row.study_abstract }}
-              </p>
+              <span class="text-custom-purple text-[1rem]">Study title</span>
+              <p class="text-custom-dark-purple text-[0.65rem]">{{ row.study_title }}</p>
+              <span class="text-custom-purple text-[1rem]">Study abstract</span>
+              <p class="text-custom-dark-purple font-[0.65rem]">{{ row.study_abstract }}</p>
               <div class="mt-2">
                 <table class="table-auto border-collapse border border-gray-300 w-full text-left">
                   <tbody>
                     <tr class="border-b">
                       <td class="px-2 py-1 font-bold">SRA Run</td>
                       <td class="px-2 py-1">
-                        <a :href="'https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=' + row.acc + '&display=metadata'" class="text-blue-500 hover:underline">
+                        <a :href="'https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=' + row.acc + '&display=metadata'"
+                          class="text-blue-500 hover:underline">
                           {{ row.acc }}
                         </a>
                       </td>
@@ -100,7 +112,8 @@
                     <tr class="border-b">
                       <td class="px-2 py-1 font-bold">SRA Experiment</td>
                       <td class="px-2 py-1">
-                        <a :href="'https://www.ncbi.nlm.nih.gov/sra/' + row.experiment" class="text-blue-500 hover:underline">
+                        <a :href="'https://www.ncbi.nlm.nih.gov/sra/' + row.experiment"
+                          class="text-blue-500 hover:underline">
                           {{ row.experiment }}
                         </a>
                       </td>
@@ -108,7 +121,8 @@
                     <tr class="border-b">
                       <td class="px-2 py-1 font-bold">SRA Sample</td>
                       <td class="px-2 py-1">
-                        <a :href="'https://www.ncbi.nlm.nih.gov/biosample/' + row.biosample" class="text-blue-500 hover:underline">
+                        <a :href="'https://www.ncbi.nlm.nih.gov/biosample/' + row.biosample"
+                          class="text-blue-500 hover:underline">
                           {{ row.biosample }}
                         </a>
                       </td>
@@ -229,7 +243,7 @@ import {
   ElTable, ElTableColumn, ElTag, ElPopover, ElButton, ElPagination, ElText, ElRow, ElCol, ElLoading, ElCheckboxButton,
 } from 'element-plus';
 import SvgIcon from '@jamescoyle/vue-icon';
-import { mdiLinkVariant, mdiInformationVariantCircleOutline, mdiMapMarker, mdiSort } from '@mdi/js';
+import { mdiLinkVariant, mdiInformationVariantCircleOutline, mdiMapMarker, mdiSort, mdiTableArrowDown, } from '@mdi/js';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title, BarElement, CategoryScale, LinearScale } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
@@ -296,11 +310,11 @@ export default {
     return {
       inputValue_raw: '',
       inputValue: '',
-      cache: [],
       mdiLink_path: mdiLinkVariant,
       mdiInfo_path: mdiInformationVariantCircleOutline,
       mdiMap_path: mdiMapMarker,
       mdiSort_path: mdiSort,
+      mdiDownlaodCSV_path: mdiTableArrowDown,
       showPopupCard_bool: false,
       chartData: {
         labels: [],
@@ -323,6 +337,7 @@ export default {
       loading: true,
       organism_list: [],
       isExpanded: false,
+      currentPage: 1,
 
     };
   },
@@ -349,25 +364,11 @@ export default {
     handleSearch() {
       if (this.inputValue.trim()) {
         this.$router.push({
-          path: '/view',
+          path: '/sample_result',
           query: { search: this.inputValue.trim() },
         });
         this.input_query = this.inputValue.trim();
       }
-    },
-    checkValidCountry(country) {
-      country = country.toLowerCase();
-      if (
-        country.startsWith("not") ||
-        country.startsWith("missing") ||
-        // country.startsWith("unk") ||
-        // country.startsWith("na") ||
-        country.startsWith("none") ||
-        country.startsWith("uncalculated")
-      ) {
-        return false;
-      }
-      return true;
     },
     toMetadatPage(acc) {
       this.$router.push({ name: 'Metadata', params: { 'accession': acc } });
@@ -545,6 +546,7 @@ export default {
     },
     handlePagination(val) {
       console.log(`current page: ${val}`);
+      this.currentPage = val;
       const inputValue_offset = this.inputValue;
       inputValue_offset.offset = 100 * (val - 1);
       this.handleSearch(inputValue_offset);
@@ -580,6 +582,28 @@ export default {
         .catch((error) => {
           console.error('An error occurred:', error);
         });
+
+    },
+    downloadSampleCSV() {
+      // Prepare the CSV content
+      const headers = this.headers;
+      const csvContent =
+        headers.join(",") + // Add headers
+        "\n" +
+        this.searchResults
+          .map((row) =>
+            headers.map((header) => JSON.stringify(row[header] || "")).join(",")
+          )
+          .join("\n"); // Add rows
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `samples_page${this.currentPage}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      console.log("CSV download triggered!");
 
     }
   },

@@ -3,11 +3,25 @@ import axios from 'axios';
 
 export const useSearchStore = defineStore('search', {
   state: () => ({
+    filters: [
+      { operator: "AND", field: "acc", value: "", additional: "" },
+    ],
+    filterKeys: [
+      { value: "acc", label: "Accession" },
+      { value: "organism", label: "Organism" },
+      { value: "date", label: "Date" },
+      { value: "geo", label: "Geographical Location" },
+      // { value: "attribute", label: "Attributes" },
+    ],
     input_query: '', // search query
     input_filters: [], // filters for the search
+    search_mode: 'full', // 'full' or 'semantic'
     searchResults: [],
     searchResultsTotal: 0,
     searchResultsCount: 0,
+    studySearchResults: [],
+    studySearchResultsTotal: 0,
+    studySearchResultsCount: 0,
     headers: [
       "acc",
       "experiment",
@@ -23,6 +37,13 @@ export const useSearchStore = defineStore('search', {
       "longitude",
       "attributes",
       "instrument"
+    ],
+    studyHeaders: [
+      "sra_study",
+      "study_title",
+      "study_abstract",
+      "center_project_name",
+      "study_type",
     ],
     categoryDict: {
       "A": "Anatomy",
@@ -84,6 +105,20 @@ export const useSearchStore = defineStore('search', {
       var date = new Date(timestamp * 1000);
       var humanDate = date.toLocaleDateString();
       return humanDate;
+    },
+    checkValidCountry(country) {
+      country = country.toLowerCase();
+      if (
+        country.startsWith("not") ||
+        country.startsWith("missing") ||
+        // country.startsWith("unk") ||
+        // country.startsWith("na") ||
+        country.startsWith("none") ||
+        country.startsWith("uncalculated")
+      ) {
+        return false;
+      }
+      return true;
     },
     addSearchHistory(query) {
       this.searchHistory.push(query);

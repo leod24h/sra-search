@@ -3,7 +3,7 @@
     <el-row :gutter="50">
       <el-col :xs="24" :sm="24" :md="18">
         <div v-if="searchResults[0]">
-          <div> {{ accession }} </div>
+          <div class="text-custom-purple font-semibold text-lg"> {{ accession }} </div>
           <div style="padding: 1rem 0;">
             <el-descriptions :column="1" :size="size" border>
               <el-descriptions-item>
@@ -78,7 +78,7 @@
               </el-descriptions-item>
             </el-descriptions>
           </div>
-          <div> Related Study</div>
+          <div class="font-bold text-lg text-gray-800"> Related Study</div>
           <div style="padding: 1rem 0;">
             <el-descriptions :column="1" :size="size" border>
               <template v-for="(key) in Object.keys(studyColDict)">

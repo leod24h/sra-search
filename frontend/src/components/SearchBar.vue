@@ -16,7 +16,7 @@ There is history dropdown in the search bar, but it is disabled in the current v
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </span>
-          <input :value="modelValue" type="text" placeholder="Try 'Malaysian forest animals'"
+          <input :value="modelValue" type="text" placeholder=""
             class="w-full py-2 px-1 mr-5 focus:outline-none" 
             @input="$emit('update:modelValue', $event.target.value)"
             @keypress.enter="handleSearch" />

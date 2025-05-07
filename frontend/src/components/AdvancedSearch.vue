@@ -8,7 +8,7 @@
     <p class="text-blue-600 text-sm mb-4"></p>
     <div class="flex flex-col">
       <search-bar v-model="inputValue" @search="handleSearch"></search-bar>
-      
+
     </div>
     <div class="mt-5">
       <h3 class="text-base font-semibold mb-2">Filters</h3>
@@ -87,17 +87,14 @@
 </template>
 
 <script>
-import {
-  ElCollapse, ElCollapseItem, ElForm, ElFormItem, ElPopover, ElInput, ElAutocomplete, ElDatePicker, ElButton,
-  ElCol, ElRow, ElTable, ElTableColumn, ElTag, ElSelect, ElOption, ElSwitch
-} from 'element-plus';
-import SvgIcon from '@jamescoyle/vue-icon';
-import { mdiInformationVariantCircleOutline, mdiFilterOutline, mdiPlus, mdiClose, mdiChevronDown } from '@mdi/js';
+import { ElInput, ElDatePicker } from 'element-plus';
+// import SvgIcon from '@jamescoyle/vue-icon';
+// import { mdiInformationVariantCircleOutline, mdiFilterOutline, mdiPlus, mdiClose, mdiChevronDown } from '@mdi/js';
 import { useSearchStore } from '../stores/store.js';
 import { toRefs } from 'vue';
 import OrganismWikiTooltip from './OrganismWikiTooltip.vue';
 import OrganismSelectAutocomplete from './OrganismSelectAutocomplete.vue';
-import DescSelectAutocomplete from './DescSelectAutocomplete.vue';
+// import DescSelectAutocomplete from './DescSelectAutocomplete.vue';
 import SearchBar from './SearchBar.vue';
 
 export default {
@@ -106,51 +103,27 @@ export default {
     const state = toRefs(searchStore);
     return {
       ...state,
-      switchAdvancedSearchDialogVisible: searchStore.switchAdvancedSearchDialogVisible,
     };
+
   },
   components: {
-    SvgIcon,
-    ElCollapse,
-    ElCollapseItem,
-    ElForm,
-    ElFormItem,
-    ElPopover,
     ElInput,
-    ElAutocomplete,
     ElDatePicker,
-    ElButton,
-    ElRow,
-    ElCol,
-    ElTable,
-    ElTableColumn,
-    ElTag,
-    ElSelect,
-    ElOption,
-    ElSwitch,
+    // SvgIcon,
     OrganismWikiTooltip,
     OrganismSelectAutocomplete,
-    DescSelectAutocomplete,
+    // DescSelectAutocomplete,
     SearchBar,
   },
   data() {
     return {
-      filters: [
-        { operator: "AND", field: "acc", value: "", additional: "" },
-      ],
-      filterKeys: [
-        { value: "acc", label: "Accession" },
-        { value: "organism", label: "Organism" },
-        { value: "date", label: "Date" },
-        { value: "geo", label: "Geographical Location" },
-        { value: "attribute", label: "Attributes" },
-      ],
-      inputValue: "", 
+      inputValue: "",
     };
   },
   methods: {
     addFilter() {
       this.filters.push({ operator: "AND", field: "acc", value: "" });
+      console.log(this.filters);
     },
     removeFilter(index) {
       this.filters.splice(index, 1);
@@ -171,7 +144,7 @@ export default {
       this.input_filters = JSON.stringify(this.input_filters);
       console.log(this.input_query, this.input_filters);
       this.$router.push({
-        path: '/view',
+        path: '/sample_result',
         query: { search: this.input_query, filters: this.input_filters },
       });
     },

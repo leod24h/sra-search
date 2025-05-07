@@ -11,7 +11,7 @@
         </div>
 
         <!-- Examples -->
-        <div class="mt-4 mb-4 text-gray-500 text-xs flex items-center">
+        <!-- <div class="mt-4 mb-4 text-gray-500 text-xs flex items-center">
             <div class=" flex flex-row space-x-2 ">
                 <div class="rounded px-2 py-1 cursor-pointer text-gray-800 bg-gray-50" @click="setExample('Malaysian forest animal')">
                     Malaysian forest animal
@@ -20,12 +20,12 @@
                     ESBL
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Radio button -->
-        <h2 class="text-md font-semibold text-gray-600">Search mode</h2>
         <div class="text-xs w-fit">
-            <div class="flex flex-col px-2 py-3">
+            <div class="flex flex-row items-center gap-2 px-2 py-3">
+                <h2 class="text-md font-semibold text-gray-600">Search mode</h2>
                 <label class="flex items-center cursor-pointer">
                     <input type="radio" value="full" v-model="searchMode" class="hidden peer" />
                     <div
@@ -34,7 +34,7 @@
                     </div>
                 </label>
 
-                <label class="flex items-center cursor-pointer mt-2">
+                <label class="flex items-center cursor-pointer">
                     <input type="radio" value="semantic" v-model="searchMode" class="hidden peer" />
                     <div
                         class="px-3 py-1 rounded border bg-gray-100 text-gray-600 font-medium transition-all peer-checked:text-violet-500 peer-checked:bg-violet-100 text-center flex-1">
@@ -51,11 +51,29 @@
                 Search
             </button>
         </div>
+
+        <div class="text-gray-800">
+            <div class="text-sm font-semibold text-gray-600 mb-2">
+                Examples
+            </div>
+            <div class="w-full flex text-xs text-gray-800">
+                <table class="w-4/5 md:w-1/2 border border-gray-200 text-left">
+                    <tbody>
+                        <tr v-for="(row, index) in examples" :key="index" @click="handleExampleClick(row)"
+                            class="cursor-pointer hover:bg-orange-50">
+                            <td class="border border-gray-300 px-2 py-2">{{ row.query }}</td>
+                            <td class="border border-gray-300 px-2 py-2">{{ row.mode }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
 import SvgIcon from '@jamescoyle/vue-icon';
+import { ElTable, ElTableColumn, ElPopover } from 'element-plus';
 import { mdiInformationVariantCircleOutline, mdiFilterOutline, mdiPlus, mdiClose, mdiChevronDown } from '@mdi/js';
 import { useSearchStore } from '../stores/store.js';
 import { toRefs } from 'vue';
@@ -72,53 +90,47 @@ export default {
     components: {
         SvgIcon,
         SearchBar,
+        ElTable,
+        ElTableColumn,
+        ElPopover,
     },
     data() {
         return {
-            filters: [
-                { operator: "AND", field: "acc", value: "", additional: "" },
-            ],
-            filterKeys: [
-                { value: "acc", label: "Accession" },
-                { value: "organism", label: "Organism" },
-                { value: "date", label: "Date" },
-                { value: "geo", label: "Geographical Location" },
-                { value: "attribute", label: "Attributes" },
-            ],
             inputValue: "",
             searchMode: "full",
+            examples: [
+                {
+                    'query': 'ESBL',
+                    'mode': 'full',
+                },
+                {
+                    'query': 'Malaysian forest animal',
+                    'mode': 'semantic',
+                },
+            ]
         };
     },
     methods: {
-        addFilter() {
-            this.filters.push({ operator: "AND", field: "acc", value: "" });
-        },
-        removeFilter(index) {
-            this.filters.splice(index, 1);
-        },
-        constructFilters() {
-            return this.filters
-                .filter((filter) => filter.value) // Only include filters with a non-empty value
-                .map((filter) => ({
-                    operator: filter.operator,
-                    field: filter.field,
-                    value: filter.value,
-                    additional: filter.additional ? filter.additional.toString() : "",
-                }));
-        },
         handleSearch() {
             this.input_query = this.inputValue.trim();
-            this.input_filters = this.constructFilters();
-            this.input_filters = JSON.stringify(this.input_filters);
-            console.log(this.input_query, this.input_filters);
+            console.log(this.input_query, this.searchMode);
+
             this.$router.push({
-                path: '/view',
-                query: { search: this.input_query, filters: this.input_filters },
+                path: '/study_result',
+                query: { search: this.input_query, mode: this.searchMode },
             });
         },
-        setExample(example) {
-            this.inputValue = example;
+        handleExampleClick(row) {
+            // Set inputValue and searchMode based on the clicked row
+            this.inputValue = row.query;
+            this.searchMode = row.mode;
         },
     },
 };
 </script>
+
+<style>
+/* .el-table__body tr:hover>td {
+    background-color: #fff7ed !important;
+} */
+</style>

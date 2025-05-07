@@ -16,13 +16,11 @@ from pgvector.psycopg2 import HalfVector, register_vector
 import os
 
 
-
 embedding_model = SentenceTransformer("../all-MiniLM-L6-v2", device='cuda')
 rerank_model = CrossEncoder("../jina-reranker-v1-turbo-en", trust_remote_code=True, device='cuda')
 
 app = Flask(__name__)
 
-    
 
 @app.route('/autocomplete_organism', methods=['GET'])
 @cross_origin()
@@ -327,10 +325,20 @@ def fetch_study():
         return jsonify({}), 200
     
 
-@app.route('/query_abstract/<string:text>', methods=['GET'])
-def query_abstract(text, ft = False):
+@app.route('/query_abstract', methods=['GET'])
+@cross_origin()
+def query_abstract():
     
+    text = request.args.get('query', '').strip()
     text = format_query_abstract(text)
+    
+    ft = request.args.get('ft', '').strip()
+    print(ft)
+    ft = True if ft == "true" else False
+    
+    print("Query:", text)
+    print("FT:", ft)
+    
     conn = get_connection()
 
     cursor = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
@@ -338,7 +346,7 @@ def query_abstract(text, ft = False):
         sql_query = """
             SELECT sra_study, study_title, study_abstract, center_project_name, study_type
             FROM study_abstract WHERE to_tsvector('english', study_title) @@ plainto_tsquery(%s) 
-            LIMIT 20;
+            LIMIT 100;
         """    
 
         cursor.execute(sql_query, (text,))
@@ -348,16 +356,83 @@ def query_abstract(text, ft = False):
             SELECT sra_study, study_title, study_abstract, center_project_name, study_type
             FROM study_abstract
             ORDER BY vec <=> %s::halfvec
-            LIMIT 20;
+            LIMIT 100;
         """
         cursor.execute(sql_query, (query_vector,))
-
-    
 
     results = cursor.fetchall()
     cursor.close()
     conn.close()
     return jsonify(results)
+
+@app.route('/fetch_sample', methods=['GET'])
+@cross_origin()
+def fetch_sample():
+    sra_study_id = request.args.get('query', '').strip() # sra_study
+    
+    print("SRA Study ID:", sra_study_id)
+    
+    conn = get_connection()
+    cursor = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
+    
+    cols = ", ".join(get_colnames())
+    
+    sql_query = f"SELECT {cols} FROM metadata WHERE sra_study = %s LIMIT 10;"
+    cursor.execute(sql_query, (sra_study_id,))
+    
+    results = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify(results)
+
+@app.route('/fetch_sample_from_multiple_study', methods=['GET'])
+@cross_origin()
+def fetch_sample_from_multiple_study():
+    # Retrieve and clean the query parameter
+    sra_study_id = request.args.get('query', '').strip()
+    sra_study_ids = sra_study_id.split(",")
+    sra_study_ids = [s.strip() for s in sra_study_ids]
+
+    print("SRA Study ID:", sra_study_ids)
+
+    # Database connection
+    conn = get_connection()
+    cursor = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
+
+    # Columns to fetch
+    cols = ", ".join(get_colnames())
+
+    # Create a formatted list of sra_study_ids for use in the query
+    placeholders = ', '.join(['%s'] * len(sra_study_ids))
+
+    # SQL query with Common Table Expression (CTE) to limit results per group
+    sql_query = f"""
+        WITH ranked_metadata AS (
+            SELECT 
+                {cols}, 
+                sra_study,
+                ROW_NUMBER() OVER (PARTITION BY sra_study ORDER BY id) AS row_num
+            FROM 
+                metadata
+            WHERE 
+                sra_study IN ({placeholders})
+        )
+        SELECT * FROM ranked_metadata WHERE row_num <= 10;
+    """
+    
+    # Execute the query
+    cursor.execute(sql_query, tuple(sra_study_ids))
+    results = cursor.fetchall()
+
+    # Close the connection
+    cursor.close()
+    conn.close()
+
+    # Return the results as JSON
+    return jsonify(results)
+    
 if __name__ == "__main__":
     app.run(debug=True, port=5000, host="0.0.0.0")
             # ssl_context=("fullchain.pem", "privkey.pem"))

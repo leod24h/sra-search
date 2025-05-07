@@ -70,7 +70,7 @@ def advance_filter_where(filters):
             "acc",
             "experiment",
             "biosample",
-            "bioproject",
+            "sra_study",
         ]
 
         # Build SQL query with dynamic filtering
@@ -91,10 +91,14 @@ def advance_filter_where(filters):
                 conditions += f" {operator} "
             if field == 'acc':
                 conditions_temp = ""
-                for col_name in accession_related:
-                    conditions_temp = construct_condition(conditions_temp, "OR")
-                    conditions_temp += f"{col_name} = %s"
-                    params.append(value)
+                # Split the value by comma
+                values = value.split(",")
+                # Iterate over the values and create conditions
+                for val in values:
+                    for col_name in accession_related:
+                        conditions_temp = construct_condition(conditions_temp, "OR")
+                        conditions_temp += f"{col_name} = %s"
+                        params.append(val.strip()) # strip() to remove leading/trailing spaces
                 conditions += f"({conditions_temp})"
             if field == 'organism':
                 if additional:

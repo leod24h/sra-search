@@ -8,7 +8,8 @@ import Home from '@/views/Home.vue'
 import BioStudy from '@/views/BioStudy.vue'
 import Sample from '@/views/Sample.vue'
 import Taxonomy from '@/views/Taxonomy.vue'
-import View from '@/views/View.vue'
+import SampleResult from '@/views/SampleResult.vue'
+import StudyResult from '@/views/StudyResult.vue'
 import Metadata from '@/views/Metadata.vue'
 import Trial from '@/views/Trial.vue'
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
@@ -17,9 +18,14 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const routes = [
   {
-    path: '/view',
-    name: 'View',
-    component: View,
+    path: '/sample_result',
+    name: 'Sample Result',
+    component: SampleResult,
+  },
+  {
+    path: '/study_result',
+    name: 'Study Result',
+    component: StudyResult,
   },
   {
     path: '/',
@@ -38,7 +44,7 @@ const routes = [
   },
   {
     path: '/study',
-    name: 'Study',
+    name: 'Study Search',
     component: BioStudy,
   },
   {

@@ -29,12 +29,12 @@
       <div class="flex justify-center space-x-4">
         <button
           @click="$router.push('/study')"
-          class="flex items-center px-6 py-3 rounded bg-indigo-50 text-slate-600 font-semibold shadow-md hover:bg-indigo-200 transition-all">
+          class="flex items-center px-6 py-3 rounded bg-white text-blue-800 font-semibold shadow-md hover:bg-violet-200 transition-all">
           Search by Study
         </button>
         <button
-          class="flex items-center px-6 py-3 rounded bg-indigo-50 text-slate-600 font-semibold shadow-md hover:bg-indigo-200 transition-all">
-          
+        @click="$router.push('/sample')"
+          class="flex items-center px-6 py-3 rounded bg-white text-blue-800 font-semibold shadow-md hover:bg-violet-200 transition-all">
           Search by Sample
         </button>
       </div>
