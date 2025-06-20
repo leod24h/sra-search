@@ -3,7 +3,7 @@
 A powerful and efficient tool for **natural language** searching and filtering **Sequence Read Archive (SRA) metadata**, enabling researchers and bioinformaticians to query large-scale genomic datasets with ease and precision. The database contains 35M+ samples taken from 583,982 studies.
 
 ---
-[!Frontend](../imgs/SRA Metadata Home)
+[!Frontend]("../imgs/SRA Metadata Home.jpg")
 ## Overview
 ### Key Features
 - **Natural Language Searching**: Perform searches using natural language queries to retrieve the most relevant runs from all SRA metadata.
