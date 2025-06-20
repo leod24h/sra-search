@@ -1,6 +1,6 @@
 # 🧬 SRA Metadata Search Tool
 
-A powerful and efficient tool for **natural language** searching and filtering **Sequence Read Archive (SRA) metadata**, enabling researchers and bioinformaticians to query large-scale genomic datasets with ease and precision.
+A powerful and efficient tool for **natural language** searching and filtering **Sequence Read Archive (SRA) metadata**, enabling researchers and bioinformaticians to query large-scale genomic datasets with ease and precision. The database contains 35M+ samples taken from 583,982 studies.
 
 ---
 
@@ -18,9 +18,14 @@ A powerful and efficient tool for **natural language** searching and filtering *
 ## Cost
 Cost per query 0.000243 USD. ~ 500 queries = 1 HKD
 
-## How It Works
+### Semantic Search (Study)
+Users can search for relevant study abstracts using either full text matching or semantic search. 
 
-### Semantic Search
+> Studies with ESBL
+
+Would return relevant studies containing the 'ESBL' keyword, and then samples containing E.Coli. 
+
+### Semantic Search (Sample)
 Instead of manually filtering records, users can input natural language queries such as:
 
 > "Malaysian Pangolin after 2017"
