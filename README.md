@@ -3,7 +3,7 @@
 A powerful and efficient tool for **natural language** searching and filtering **Sequence Read Archive (SRA) metadata**, enabling researchers and bioinformaticians to query large-scale genomic datasets with ease and precision. The database contains 35M+ samples taken from 583,982 studies.
 
 ---
-![Front end](/imgs/SRA Metadata Home.jpeg)
+![Front end](imgs/SRA Metadata Home.jpeg)
 ## Overview
 ### Key Features
 - **Natural Language Searching**: Perform searches using natural language queries to retrieve the most relevant runs from all SRA metadata.
@@ -15,8 +15,7 @@ A powerful and efficient tool for **natural language** searching and filtering *
 
 ---
 
-## Cost
-Cost per query 0.000243 USD. ~ 500 queries = 1 HKD
+
 
 ### Semantic Search (Study)
 Users can search for relevant study abstracts using either full text matching or semantic search. 
@@ -92,7 +91,11 @@ The system employs a multi-stage process for **query interpretation, embedding-b
 ---
 
 ### Taxonomy
+![Front end](imgs/SRA Metadata Taxonomy.jpeg)
 
+
+### Cost
+Cost per query 0.000243 USD. ~ 500 queries = 1 HKD
 
 ## Authors
 Tracy Wong @ tracywong@d24h.hk
