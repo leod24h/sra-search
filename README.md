@@ -4,7 +4,7 @@ A powerful and efficient tool for **natural language** searching and filtering *
 
 ---
 
-![Front end](imgs/SRA Metadata Home.jpeg)
+![Front end](imgs/Home.jpeg)
 
 ## Overview
 ### Key Features
@@ -26,7 +26,7 @@ Users can search for relevant study abstracts using either full text matching or
 
 Would return relevant studies containing the 'ESBL' keyword, and then samples containing E.Coli. 
 
-![Study](imgs/SRA Metadata Study Result.jpeg)
+![Study](imgs/StudyResult.jpeg)
 
 ### Semantic Search (Sample)
 Instead of manually filtering records, users can input natural language queries such as:
@@ -93,7 +93,7 @@ The system employs a multi-stage process for **query interpretation, embedding-b
 ---
 
 ### Taxonomy
-![Front end](imgs/SRA Metadata Taxonomy.jpeg)
+![Front end](imgs/Taxonomy.jpeg)
 
 
 ### Cost
