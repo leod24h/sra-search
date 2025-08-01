@@ -11,19 +11,17 @@ from abstract import *
 
 with open("../api_key.txt", "r") as f:
     for line in f:
-        key, value = line.strip().split("=", 1)  
-        os.environ[key] = value  
+        if "="  in line: 
+            key, value = line.strip().split("=",1)  
+            key = value  
 
-# Set up Azure OpenAI credentials
-deployment = "gpt-4o-mini"  # Azure uses "deployment" instead of model name
-token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
+
+deployment = 'gpt-4.1-nano'
 client = AzureOpenAI(
-    api_version="2024-10-21",
-    azure_endpoint="https://tracysra.openai.azure.com/",
-    azure_ad_token_provider=token_provider,
+    api_version="2024-12-01-preview",
+    azure_endpoint="https://tracy-mdi8rgcs-eastus2.cognitiveservices.azure.com/",
+    api_key=key,
 )
-
-
 
 def get_prompt(query):
     prompt = f"""

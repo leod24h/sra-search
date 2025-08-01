@@ -97,7 +97,7 @@
       </el-col>
       <el-col :xs="24" :sm="24" :md="6">
         <div v-if="searchResults">
-          <div v-if="getMapUrl()">
+          <!-- <div v-if="getMapUrl()">
             <div>
               <div style="display: flex; align-items: center;">
                 <svg-icon type="mdi" :path="mdiImageMap_path" class="mr-2" color="var(--el-color-primary)"></svg-icon>
@@ -109,7 +109,7 @@
                 referrerpolicy="no-referrer-when-downgrade" :src="getMapUrl()">
               </iframe>
             </div>
-          </div>
+          </div> -->
 
           <!-- <div style="border-color: var(--green-1);">
             <div style="display: flex; align-items: center;">
@@ -204,6 +204,7 @@ export default {
       'contains_mesh_term': true,
     };
     this.handleSearch(query, 0);
+    console.log(this.searchResults);
   },
   watch: {
     searchResults: function (new_searchResults, old_searchResults) {

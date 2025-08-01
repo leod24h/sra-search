@@ -77,11 +77,12 @@
       </div>
 
       <div class="flex items-center">
-        <el-pagination :page-size="100" :total="searchResultsTotal" layout="total, prev, pager, next, jumper"
-          @current-change="handlePagination" />
-        <span class="text-[15px] text-gray-600">Page Size: 100</span>
+        <span class="text-[15px] text-gray-600">Total {{ searchResultsTotal }}</span>
+        <el-pagination :page-size="pageSize" :total="allSearchResults.length" :current-page="currentPage"
+          layout="prev, pager, next, jumper" @current-change="handlePagination" />
+        <span class="text-[15px] text-gray-600">Page Size {{ pageSize }}</span>
       </div>
-      <el-table ref="sraTable" :data="searchResults"
+      <el-table ref="sraTable" :data="paginatedResults"
         class="text-sm text-black rounded-[15px] shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_0_rgba(0,0,0,0.06)] mt-2"
         :cell-style="{ padding: '1.85vh 0.92vh 1.85vh 0.92vh' }"
         :header-cell-style="{ background: 'var(--very-light-1)', padding: '0.92vh' }"
@@ -225,15 +226,14 @@
           </template>
         </el-table-column>
       </el-table>
-    </div>
-
-    <div class="px-10">
-      <div class="flex items-center">
-        <el-pagination :page-size="100" :total="searchResultsTotal" layout="total, prev, pager, next, jumper"
-          @current-change="handlePagination" />
-        <span class="text-[15px] text-gray-600">Page Size: 100</span>
+      <div class="flex items-center mt-4">
+        <span class="text-[15px] text-gray-600">Total {{ searchResultsTotal }}</span>
+        <el-pagination :page-size="pageSize" :total="allSearchResults.length" :current-page="currentPage"
+          layout="prev, pager, next, jumper" @current-change="handlePagination" />
+        <span class="text-[15px] text-gray-600">Page Size {{ pageSize }}</span>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -306,6 +306,16 @@ export default {
       }
     },
   },
+  computed: {
+    paginatedResults() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      return this.allSearchResults.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.allSearchResults.length / this.pageSize);
+    }
+  },
   data() {
     return {
       inputValue_raw: '',
@@ -338,6 +348,9 @@ export default {
       organism_list: [],
       isExpanded: false,
       currentPage: 1,
+      pageSize: 20, // Change from 100 to 20
+      currentPage: 1,
+      allSearchResults: [], // Store all results
 
     };
   },
@@ -387,38 +400,43 @@ export default {
           params: custom_params
         })
         .then((response) => {
-          this.searchResultsTotal = response.data[response.data.length - 1]; // The last element is the total count
+          // console.log(response.data);
+          this.searchResultsTotal = response.data[response.data.length - 1];
+          console.log("Total search results: " + this.searchResultsTotal);
           this.searchResultsCount = response.data.length - 1;
-          // console.log("Total:", this.searchResultsTotal);
-          // console.log("Count:", this.searchResultsCount);
-          this.searchResults = response.data.slice(0, -1).map((row) => { // .slice(0, -1) to exclude the last element
+
+          // Store all results
+          this.allSearchResults = response.data.slice(0, -1).map((row) => {
             const rowObject = {};
             this.headers.forEach((header, index) => {
-              rowObject[header] = row[index] || null; // Assign value or null if missing
+              rowObject[header] = row[index] || null;
             });
             return rowObject;
           });
-          this.searchResults.forEach(function (result) {
+
+          // Process dates for all results
+          this.allSearchResults.forEach(function (result) {
             var timestamp = result.releasedate;
-            var date = new Date(timestamp * 1000); // Convert timestamp to milliseconds
-            var humanDate = date.toLocaleDateString(); // Format the date in human-readable format
+            var date = new Date(timestamp * 1000);
+            var humanDate = date.toLocaleDateString();
             result.releasedate_timestamp = timestamp;
-            result.releasedate = humanDate; // Add the new property with human-readable date
+            result.releasedate = humanDate;
           });
-          const organismCounts = this.countOrganisms(this.searchResults);
+
+          // Reset to first page
+          this.currentPage = 1;
+
+          // Update charts with all data
+          const organismCounts = this.countOrganisms(this.allSearchResults);
           this.chartData = {
             labels: Object.keys(organismCounts),
-            datasets: [
-              {
-                data: Object.values(organismCounts),
-                backgroundColor: ["#efe1e6", "#d2b7d2", "#c7cbd9", "#bfcfd2", "#cfe3db", "#dce6d3", "#ede9ce"], // Add more colors if needed
-              },
-            ],
+            datasets: [{
+              data: Object.values(organismCounts),
+              backgroundColor: ["#efe1e6", "#d2b7d2", "#c7cbd9", "#bfcfd2", "#cfe3db", "#dce6d3", "#ede9ce"],
+            }],
           };
-          this.countSampleByMonth_visualization(this.searchResults);
-          // this.mapVisualization(this.searchResults);
+          this.countSampleByMonth_visualization(this.allSearchResults);
           this.loading = false;
-
         })
         .catch((error) => {
           // Handle errors
@@ -547,16 +565,17 @@ export default {
     handlePagination(val) {
       console.log(`current page: ${val}`);
       this.currentPage = val;
-      const inputValue_offset = this.inputValue;
-      inputValue_offset.offset = 100 * (val - 1);
-      this.handleSearch(inputValue_offset);
+      // Remove API call - just change the page number
+      // The computed property will handle showing the right data
     },
     sortByDate(order) {
       if (order == "ASC") {
-        this.searchResults.sort((a, b) => { return a.releasedate_timestamp - b.releasedate_timestamp });
+        this.allSearchResults.sort((a, b) => { return a.releasedate_timestamp - b.releasedate_timestamp });
       } else {
-        this.searchResults.sort((a, b) => { return b.releasedate_timestamp - a.releasedate_timestamp });
+        this.allSearchResults.sort((a, b) => { return b.releasedate_timestamp - a.releasedate_timestamp });
       }
+      // Reset to first page after sorting
+      this.currentPage = 1;
     },
     fetchStudy(row) {
       const sra_study = row.sra_study;

@@ -171,7 +171,7 @@ export default {
       console.log(this.input_filters);
       
       this.$router.push({
-        path: '/view',
+        path: '/sample_result',
         query: { search: this.input_query, filters: this.input_filters },
       });
     },

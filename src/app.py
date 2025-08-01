@@ -187,7 +187,8 @@ def query_filter():
             text = ""
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+    limit = 2000
+
     if len(text) > 1:
 
         # Format Query
@@ -246,10 +247,8 @@ def query_filter():
         t35 = time.time()
         print("Time taken to count:", t35 - t3)
         
-        if count > 10:
-            sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::halfvec LIMIT 200;"
-        else:
-            sql_query =f"SELECT {cols} FROM metadata ORDER BY vec <=> %s::halfvec LIMIT 200;"
+        sql_query =f"SELECT {cols} FROM metadata WHERE {where_clause} ORDER BY vec <=> %s::halfvec LIMIT {limit};"
+
         print(sql_query)
 
         cursor_emb.execute(sql_query, params)
@@ -263,7 +262,7 @@ def query_filter():
             # Rerank the first 100 to get ids
             reranked_ids = rerank(text, results, rerank_model, limit= 200)
 
-            output = [results[i] for i in reranked_ids][:100] #+results[100:]
+            output = [results[i] for i in reranked_ids] +results[200:]
             cursor_emb.close()
             conn.close()
             
@@ -273,12 +272,12 @@ def query_filter():
             return jsonify(output)
         else:
             print("No results found")
-            return jsonify({}),200
+            return jsonify([0]),200
     elif filters:
         where_clause, params = advance_filter_where(filters)
 
         cols = ", ".join(get_colnames())
-        sql_query = f"SELECT {cols} FROM metadata WHERE {where_clause} LIMIT 100;"
+        sql_query = f"SELECT {cols} FROM metadata WHERE {where_clause} LIMIT {limit};"
         conn = get_connection()
         cursor_emb = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
 

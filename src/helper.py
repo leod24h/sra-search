@@ -82,7 +82,6 @@ def advance_filter_where(filters):
             operator = filter.get('operator')
             value = filter.get('value')
             additional = filter.get('additional')
-            print(idx, field, operator, value)
             
             if idx == 0:
                 conditions += " AND "

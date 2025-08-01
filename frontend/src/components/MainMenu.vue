@@ -42,9 +42,9 @@
       <!-- Right Menu (External Links) -->
       <ul class="flex space-x-4">
         <li>
-          <a href="https://tracywong117.github.io/tracy-sra-doc/docs/intro/" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/leod24h/sra-search" target="_blank" rel="noopener noreferrer"
             class="text-gray-300 hover:text-gray-200">
-            Docs
+            GitHub
           </a>
         </li>
         <!-- <li>
@@ -90,8 +90,8 @@
         <!-- External Links -->
         <ul class="grid grid-cols-2 gap-4 px-6 py-4">
           <li>
-            <a href="https://docs.example.com" target="_blank" rel="noopener noreferrer"
-              class="block text-white hover:text-gray-200">Docs</a>
+            <a href="https://github.com/leod24h/sra-search" target="_blank" rel="noopener noreferrer"
+              class="block text-white hover:text-gray-200">GitHub</a>
           </li>
 
         </ul>
