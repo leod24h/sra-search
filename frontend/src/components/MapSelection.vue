@@ -38,7 +38,9 @@ export default {
   methods: {
     loadRegionData() {
       const internalIP = window.location.hostname;
+      console.log(internalIP);
       const url = `http://${internalIP}:5000/get_world_popularity`;
+      console.log(url);
       axios.get(url)
         .then(response => {
           this.regionDataRows = response.data;

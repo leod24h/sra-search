@@ -19,7 +19,7 @@ with open("../api_key.txt", "r") as f:
 deployment = 'gpt-4.1-nano'
 client = AzureOpenAI(
     api_version="2024-12-01-preview",
-    azure_endpoint="https://tracy-mdi8rgcs-eastus2.cognitiveservices.azure.com/",
+    azure_endpoint="https://new-mgdb-resource.cognitiveservices.azure.com/",
     api_key=key,
 )
 

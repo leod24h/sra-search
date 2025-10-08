@@ -252,7 +252,7 @@ export default {
 
       // Fetch related samples for this row's sra_study
       const internalIP = window.location.hostname;
-      const apiUrl = `http://${internalIP}:5000/fetch_sample`;
+      const apiUrl = `http://${internalIP}:5000/search_sample_by_study`;
 
       axios
         .get(apiUrl, {
@@ -299,10 +299,6 @@ export default {
           params: custom_params
         })
         .then((response) => {
-          // this.searchResultsTotal = response.data[response.data.length];
-          // this.searchResultsCount = response.data.length;
-          // console.log("Total:", this.searchResultsTotal);
-          // console.log("Count:", this.searchResultsCount);
           this.studySearchResults = response.data.map((row) => { // .slice(0, -1) to exclude the last element
             const rowObject = {};
             this.studyHeaders.forEach((header, index) => {
@@ -312,8 +308,6 @@ export default {
             rowObject.isExpand = false;
             return rowObject;
           });
-
-
           console.log("Search Results:", this.studySearchResults);
 
           this.loading = false;
@@ -478,7 +472,7 @@ export default {
 
       if (sraStudiesWithEmptySamples.length > 0) {
         const internalIP = window.location.hostname;
-        const apiUrl = `http://${internalIP}:5000/fetch_sample_from_multiple_study`;
+        const apiUrl = `http://${internalIP}:5000/fetch_study_from_multiple_study`;
 
         axios
           .get(apiUrl, {

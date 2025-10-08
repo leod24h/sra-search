@@ -95,9 +95,9 @@
           </div>
         </div>
       </el-col>
-      <el-col :xs="24" :sm="24" :md="6">
+      <!-- <el-col :xs="24" :sm="24" :md="6">
         <div v-if="searchResults">
-          <!-- <div v-if="getMapUrl()">
+          <div v-if="getMapUrl()">
             <div>
               <div style="display: flex; align-items: center;">
                 <svg-icon type="mdi" :path="mdiImageMap_path" class="mr-2" color="var(--el-color-primary)"></svg-icon>
@@ -109,46 +109,9 @@
                 referrerpolicy="no-referrer-when-downgrade" :src="getMapUrl()">
               </iframe>
             </div>
-          </div> -->
-
-          <!-- <div style="border-color: var(--green-1);">
-            <div style="display: flex; align-items: center;">
-              <img src="MeSH-Tree.png" class="mr-2 h-5" />
-              MeSH Term
-            </div>
           </div>
-
-          <div class="px-2">
-            <div style="font-weight: 400; line-height: 35px; font-size: 16px;">
-              <div v-for="(terms, category) in groupedMeshTerm">
-                <span style="color: var(--green-2);" class="background-rounded">{{ categoryDict[category] }}</span>
-                <div v-for="term in terms">
-                  <div style="display: flex; align-items: center;">
-                    <svg-icon type="mdi" :path="mdiCircle_path" color="var(--green-1)"></svg-icon>
-                    <span style="padding-left: 10px; ">
-                      {{ term.descriptor_name }}
-                    </span>
-                    <el-popover :width="350" placement="right">
-                      <template #reference>
-                        <svg-icon type="mdi" :path="mdiInfo_path" class="info-icon-popover"
-                          color="var(--green-1)"></svg-icon>
-                      </template>
-                      <div style="padding: 0.5rem; ">
-                        <span style="color: var(--green-2);"><b><u>{{ term.descriptor_name }}</u></b></span><br>
-                        <p>{{ term.definitions }}</p>
-                        Tree numbers:
-                        <div v-for="i in term.tree_numbers">
-                          <span>{{ i }}</span>
-                        </div>
-                      </div>
-                    </el-popover>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> -->
         </div>
-      </el-col>
+      </el-col> -->
     </el-row>
   </div>
 </template>
@@ -167,7 +130,6 @@ export default {
     const state = toRefs(searchStore);
     return {
       ...state,
-      handleSearch: searchStore.performSearch,
       splitAttributes: searchStore.splitAttributes,
       timestampToHumanDate: searchStore.timestampToHumanDate,
     };
@@ -186,7 +148,7 @@ export default {
   data() {
     return {
       accession: '',
-      studyColDict: { 'bioproject': 'Bioproject', 'study_title': 'Study Title', 'study_abstract': 'Study Abstract' },
+      studyColDict: { 'bioproject': 'Bioproject', 'sra_study': 'SRA Study', 'study_title': 'Study Title', 'study_abstract': 'Study Abstract' },
       mdiInfo_path: mdiInformationVariantCircleOutline,
       mdiMap_path: mdiMapMarker,
       mdiImageMap_path: mdiImageMarker,
@@ -203,16 +165,48 @@ export default {
       'accession': this.accession,
       'contains_mesh_term': true,
     };
-    this.handleSearch(query, 0);
+    this.fetchSample(this.accession);
     console.log(this.searchResults);
   },
   watch: {
     searchResults: function (new_searchResults, old_searchResults) {
       console.log(`A searchResults returned! New query: ${new_searchResults[0]['mesh_indexing']}, Old query: ${old_searchResults[0]}`);
-      this.getMeshTermById(new_searchResults[0]['mesh_indexing']);
+      // this.getMeshTermById(new_searchResults[0]['mesh_indexing']);
     },
   },
   methods: {
+    fetchSample(acc){
+      const internalIP = window.location.hostname;
+      const apiurl = `http://${internalIP}:5000/fetch_sample`;
+      
+      axios
+      .get(apiurl, { params: { query: acc } })
+      .then((response) => {
+        this.headers.forEach((header, index) => {
+          this.searchResults[header] = response.data[0][index];
+        });
+        this.searchResults = [this.searchResults];
+        this.fetch_study(this.searchResults[0]['sra_study']);
+      })
+      .catch((error) => {
+        console.error('An error occurred:', error);
+      });
+      
+    },
+    fetch_study(sra_study) {
+      const internalIP = window.location.hostname;
+      const apiurl = `http://${internalIP}:5000/fetch_study`;
+
+      axios
+        .get(apiurl, { params: { query: sra_study } })
+        .then((response) => {
+          this.searchResults[0]['study_title'] = response.data[0][0];
+          this.searchResults[0]['study_abstract'] = response.data[0][1];
+        })
+        .catch((error) => {
+          console.error('An error occurred:', error);
+        });
+    },
     getMapUrl() {
       const apiKey = 'AIzaSyAGgq5zdgK24qKo50cbzAmQaTHzeCSqCn8';
       var url = ''
@@ -226,53 +220,7 @@ export default {
       console.log(url);
       return url;
     },
-    getMeshTermById(mesh_ids) {
-      const internalIP = window.location.hostname;
-      const apiurl = `https://${internalIP}:5000/get_mesh_term_by_id`;
-      const query = {
-        'mesh_ids': mesh_ids
-      }
-      console.log(query);
-      axios
-        .post(apiurl, query)
-        .then((response) => {
-          this.meshTerm = response.data;
-          // var temp_category_letter = [];
-          for (let term of this.meshTerm) {
-            term.tree_numbers = eval(term.tree_numbers);
-            console.log(term.tree_numbers[0]);
-            if (term.tree_numbers[0]) {
-              term.category = term.tree_numbers[0][0];
-            }
-          }
-          this.groupMeshTermByCategory();
-          this.groupedMeshTerm = this.sortedGroupedMeshTerm();
-        })
-        .catch((error) => {
-          console.error('An error occurred:', error);
-        });
-    },
-    groupMeshTermByCategory() {
-      for (const term of this.meshTerm) {
-        const category = term.category;
-        if (this.categoryDict.hasOwnProperty(category)) {
-          const categoryLetter = category;
-          if (!this.groupedMeshTerm.hasOwnProperty(categoryLetter)) {
-            this.groupedMeshTerm[categoryLetter] = [];
-          }
-          this.groupedMeshTerm[categoryLetter].push(term);
-        }
-      }
-    },
-    sortedGroupedMeshTerm() {
-      return Object.keys(this.groupedMeshTerm)
-        .sort()
-        .reduce((sortedObj, key) => {
-          sortedObj[key] = this.groupedMeshTerm[key];
-          return sortedObj;
-        }, {});
-    }
-
+    
   }
 }
 

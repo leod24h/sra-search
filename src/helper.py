@@ -4,10 +4,10 @@ from flask import jsonify
 def get_connection():
     conn = psycopg2.connect(
         dbname="mgdb",
-        user="postgres",
-        password="1",
-        host="localhost",
-        port="5432"
+        user="tracy",
+        # password="1",
+        # host="localhost",
+        # port="5432"
     )
     return conn
 def get_colnames():
@@ -112,8 +112,8 @@ def advance_filter_where(filters):
                 conditions += f"country LIKE %s"
                 params.append(f"%{value}%")
             if field == 'date':
-                after_timestamp = convert_date_to_timestamp(value[0])
-                before_timestamp = convert_date_to_timestamp(value[1])
+                after_timestamp = int(convert_date_to_timestamp(value[0]))
+                before_timestamp = int(convert_date_to_timestamp(value[1]))
                 conditions += f"(releasedate >= %s AND releasedate <= %s)"
                 # conditions += f"(collectiondate >= %s AND collectiondate <= %s OR releasedate >= %s AND releasedate <= %s)"
                 params.append(after_timestamp)

@@ -268,7 +268,7 @@ export default {
     const state = toRefs(searchStore);
     return {
       ...state,
-      searchForStudyFromAcc: searchStore.performSearch,
+      // searchForStudyFromAcc: searchStore.performSearch,
     };
   },
   components: {

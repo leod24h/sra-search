@@ -16,8 +16,8 @@ from pgvector.psycopg2 import HalfVector, register_vector
 import os
 
 
-embedding_model = SentenceTransformer("../all-MiniLM-L6-v2", device='cuda')
-rerank_model = CrossEncoder("../jina-reranker-v1-turbo-en", trust_remote_code=True, device='cuda')
+embedding_model = SentenceTransformer("../all-MiniLM-L6-v2", device='cpu')
+rerank_model = CrossEncoder("../jina-reranker-v1-turbo-en", trust_remote_code=True, device='cpu')
 
 app = Flask(__name__)
 
@@ -237,7 +237,7 @@ def query_filter():
 
         ## SET NPROBES
         cursor_set = conn.cursor()
-        cursor_set.execute("SET ivfflat.probes = 200;")
+        cursor_set.execute("SET ivfflat.probes = 120;")
         cursor_set.close()
 
 
@@ -261,8 +261,8 @@ def query_filter():
         if len(results)>1:
             # Rerank the first 100 to get ids
             reranked_ids = rerank(text, results, rerank_model, limit= 200)
-
             output = [results[i] for i in reranked_ids] +results[200:]
+            # output = results
             cursor_emb.close()
             conn.close()
             
@@ -364,9 +364,9 @@ def query_abstract():
     conn.close()
     return jsonify(results)
 
-@app.route('/fetch_sample', methods=['GET'])
+@app.route('/search_sample_by_study', methods=['GET'])
 @cross_origin()
-def fetch_sample():
+def search_sample_by_study():
     sra_study_id = request.args.get('query', '').strip() # sra_study
     
     print("SRA Study ID:", sra_study_id)
@@ -378,6 +378,26 @@ def fetch_sample():
     
     sql_query = f"SELECT {cols} FROM metadata WHERE sra_study = %s LIMIT 10;"
     cursor.execute(sql_query, (sra_study_id,))
+    
+    results = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return jsonify(results)
+
+@app.route('/fetch_sample', methods=['GET'])
+@cross_origin()
+def fetch_sample():
+    sample_id = request.args.get('query', '').strip() # sample
+    
+    conn = get_connection()
+    cursor = conn.cursor(name='server_cursor', cursor_factory=DictCursor)
+    
+    cols = ", ".join(get_colnames())
+    
+    sql_query = f"SELECT {cols} FROM metadata WHERE acc = %s;"
+    cursor.execute(sql_query, (sample_id,))
     
     results = cursor.fetchall()
     
@@ -432,6 +452,25 @@ def fetch_sample_from_multiple_study():
     # Return the results as JSON
     return jsonify(results)
     
+
+def warmup():
+    conn = get_connection()
+    cursor = conn.cursor()
+    conn.autocommit = True
+
+    cursor.execute("SELECT pg_prewarm('public.metadata_vec_idx');") # , mode := 'read'
+    idx_blocks = cursor.fetchone()[0]
+    cursor.execute("SELECT pg_prewarm('public.metadata');")
+    tbl_blocks = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    print("Database prewarmed successfully.")
+
+
 if __name__ == "__main__":
+    # warmup()
+
+
+
     app.run(debug=True, port=5000, host="0.0.0.0")
             # ssl_context=("fullchain.pem", "privkey.pem"))

@@ -6,7 +6,7 @@
       <div class="flex items-center">
         <!-- Uncomment if you want the logo back -->
         <a href="/">
-          <img src="SRA-logo.png" alt="SRA Logo" class="w-8 h-8 mr-5" />
+          <img src="/SRA-logo.png" alt="SRA Logo" class="w-8 h-8 mr-5" />
         </a>
         <ul class="flex space-x-4">
           <li>
@@ -59,7 +59,7 @@
     <!-- Mobile Menu -->
     <div v-if="isMobile" class="border-b border-gray-700">
       <div class="flex items-center justify-between px-6 py-2" @click="isOpen = !isOpen">
-        <img src="SRA-logo.png" alt="SRA Logo" class="w-8 h-8 mr-5" />
+        <img src="/SRA-logo.png" alt="SRA Logo" class="w-8 h-8 mr-5" />
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
           class="w-4 h-4 text-white cursor-pointer">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />

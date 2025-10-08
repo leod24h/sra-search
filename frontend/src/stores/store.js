@@ -84,6 +84,23 @@ export const useSearchStore = defineStore('search', {
           console.error('An error occurred:', error);
         });
     },
+    // fetchSample(acc){
+    //   const internalIP = window.location.hostname;
+    //   const apiurl = `https://${internalIP}:5000/fetch_sample`;
+
+    //   axios
+    //     .get(apiurl, { params: { query: acc } })
+    //     .then((response) => {
+    //       console.log(response);
+    //       // this.searchResults = response.data.data;
+    //       // this.searchResultsCount = response.data.count;
+    //       // this.searchResultsTotal = response.data.total;
+    //     })
+    //     .catch((error) => {
+    //       console.error('An error occurred:', error);
+    //     });
+
+    // },
     splitAttributes(text) {
       if (!text || text.trim().length === 0) {
         return [];
